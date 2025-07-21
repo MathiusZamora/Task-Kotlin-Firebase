@@ -1,3 +1,4 @@
+
 package com.example.todoapp.repository
 
 import com.example.todoapp.model.Task
@@ -15,7 +16,7 @@ class TaskRepository {
 
     fun getTasks(): Flow<List<Task>> = callbackFlow {
         val listener = tasksCollection
-            .whereEqualTo("uid", auth.currentUser?.uid ?: "")
+            // Eliminar: .whereEqualTo("uid", auth.currentUser?.uid ?: "")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)

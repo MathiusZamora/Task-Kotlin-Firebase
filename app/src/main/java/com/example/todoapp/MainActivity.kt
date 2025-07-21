@@ -19,6 +19,7 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.auth.FirebaseAuth
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,17 +28,36 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(this, "Google Play Services no está disponible", Toast.LENGTH_LONG).show()
             return
         }
-        // Iniciar sesión anónima
-        FirebaseAuth.getInstance().signInAnonymously()
-            .addOnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    Toast.makeText(
-                        this,
-                        "Error en autenticación: ${task.exception?.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+
+        // Configurar persistencia de autenticación
+        val auth = FirebaseAuth.getInstance()
+        if (auth.currentUser == null) {
+            auth.signInAnonymously()
+                .addOnCompleteListener { task ->
+                    if (!task.isSuccessful) {
+                        Toast.makeText(
+                            this,
+                            "Error en autenticación: ${task.exception?.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
-            }
+        }
+
+        // Iniciar sesión anónima
+        if (auth.currentUser == null) {
+            auth.signInAnonymously()
+                .addOnCompleteListener { task ->
+                    if (!task.isSuccessful) {
+                        Toast.makeText(
+                            this,
+                            "Error en autenticación: ${task.exception?.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+        }
+
         setContent {
             TodoAppTheme {
                 Surface(

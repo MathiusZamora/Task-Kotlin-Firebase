@@ -1,8 +1,9 @@
+
 package com.example.todoapp.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +15,8 @@ import com.example.todoapp.repository.TaskRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.UUID
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +27,10 @@ fun AddEditTaskScreen(navController: NavController, taskId: String?) {
     var description by remember { mutableStateOf("") }
     var time by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    // Formateador para la hora
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     // Load existing task if editing
     LaunchedEffect(taskId) {
@@ -88,15 +95,34 @@ fun AddEditTaskScreen(navController: NavController, taskId: String?) {
             )
             OutlinedTextField(
                 value = time,
-                onValueChange = { time = it },
+                onValueChange = { /* No editable directamente */ },
                 label = { Text("Time (e.g., 14:30)") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                readOnly = true,
+                trailingIcon = {
+                    IconButton(onClick = { showTimePicker = true }) {
+                        Icon(Icons.Default.AccessTime, contentDescription = "Select Time")
+                    }
+                }
             )
+            if (showTimePicker) {
+                TimePickerDialog(
+                    onConfirm = { hour, minute ->
+                        time = LocalTime.of(hour, minute).format(timeFormatter)
+                        showTimePicker = false
+                    },
+                    onCancel = { showTimePicker = false }
+                )
+            }
             Button(
                 onClick = {
                     scope.launch {
                         if (currentUser == null) {
                             errorMessage = "No estás autenticado. Intenta de nuevo."
+                            return@launch
+                        }
+                        if (time.isBlank()) {
+                            errorMessage = "Por favor, selecciona una hora."
                             return@launch
                         }
                         try {
@@ -125,4 +151,30 @@ fun AddEditTaskScreen(navController: NavController, taskId: String?) {
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerDialog(
+    onConfirm: (Int, Int) -> Unit,
+    onCancel: () -> Unit
+) {
+    val timePickerState = rememberTimePickerState()
+
+    AlertDialog(
+        onDismissRequest = { onCancel() },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(timePickerState.hour, timePickerState.minute) }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onCancel() }) {
+                Text("Cancel")
+            }
+        },
+        text = {
+            TimePicker(state = timePickerState)
+        }
+    )
 }
